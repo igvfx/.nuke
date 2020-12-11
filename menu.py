@@ -3,6 +3,8 @@ import os
 import re
 import sys
 import subprocess
+import ntpath
+
 
 menubar = nuke.menu("Nuke")
 
@@ -148,9 +150,10 @@ def createReadFromWrite():
 def openDir():
     node = nuke.thisNode()
     path = os.path.dirname(node["file"].getValue())
+    path = path.replace("/", "\\")
 
     if os.path.isdir(path):
-        subprocess.check_call(["explorer", path.replace("/", "\\")])
+        subprocess.check_call(["explorer", path])
     else:
         nuke.message("No dir!")
 #################
@@ -159,11 +162,20 @@ def writeTools():
    outName = nuke.PyScript_Knob('setOutName', 'setOutName', 'add_out_names(nuke.thisNode())')
    readFromWrite = nuke.PyScript_Knob('readFromWrite', 'readFromWrite', 'createReadFromWrite()')
    openDir = nuke.PyScript_Knob('openDir', 'openDir', 'openDir()')
+   sendToAfanasy = nuke.PyScript_Knob('render', 'render', 'cgru.render()')
    n.addKnob(nuke.Tab_Knob('Tools', 'Tools'))
    n.addKnob(outName)
+   n.addKnob(sendToAfanasy)
    n.addKnob(readFromWrite)
    n.addKnob(openDir)
 
 nuke.addOnUserCreate(writeTools, nodeClass = 'Write')
 #################
-
+def readTools():
+    n = nuke.thisNode()
+    openDir = nuke.PyScript_Knob('openDir', 'openDir', 'openDir()')
+    n.addKnob(nuke.Tab_Knob('Tools', 'Tools'))
+    n.addKnob(openDir)
+    
+nuke.addOnUserCreate(readTools, nodeClass = 'Read')
+#################
