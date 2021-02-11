@@ -17,12 +17,13 @@ def disableErrorNodes():
                 node.knob("disable").setValue(1)   
 
 menubar.addCommand( "disableErrorNodes", "disableErrorNodes()") 
-nuke.addOnScriptLoad(disableErrorNodes)  
+#nuke.addOnScriptLoad(disableErrorNodes)  
 ###############################################################
 def killViewers():
     for v in nuke.allNodes("Viewer"):
         nuke.delete(v)
 nuke.addOnScriptLoad(killViewers)
+menubar.addCommand( "killViewers", "killViewers()")  
 ###############################################################
 def appendNearShots():
 
@@ -63,10 +64,10 @@ def appendNearShots():
         if os.path.isdir(outPath):
             fullPath = outPath + os.listdir(outPath)[0]
             for seq in nuke.getFileNameList(fullPath):
-                readNode = nuke.createNode('Read') 
+                readNode = nuke.createNode('Read', inpanel = False) 
                 readNode.knob('file').fromUserText(fullPath + "/" + seq)
         else:
-            readNode = nuke.createNode('Read')
+            readNode = nuke.createNode('Read', inpanel = False)
 
         return readNode
     
@@ -75,7 +76,7 @@ def appendNearShots():
     currRead = makeFullPath (currentEpisodePath, epDirListFiltered[currShotIndex])
     nextRead = makeFullPath (currentEpisodePath, epDirListFiltered[nextShotIndex])
      
-    appendNode = nuke.createNode('AppendClip')   
+    appendNode = nuke.createNode('AppendClip', inpanel = False)   
     appendNode.setInput(0, prevRead)
     appendNode.setInput(1, currRead)
     appendNode.setInput(2, nextRead)
@@ -137,7 +138,7 @@ def createReadFromWrite():
     wOut = write["file"].getValue()
     wColorspace = write["colorspace"].getValue() 
 
-    read = nuke.createNode("Read")
+    read = nuke.createNode("Read")    
     read.setXpos (int(wPosX)+120)
     read.setYpos (int(wPosY))
     read["file"].setValue(wOut)
@@ -146,16 +147,21 @@ def createReadFromWrite():
     read["last"].setValue(int(lFrame))
     read["origfirst"].setValue(int(fFrame))
     read["origlast"].setValue(int(lFrame))
+    
+    nuke.connectViewer(0,read)
+    nuke.clearRAMCache()
+    nuke.clearDiskCache()
 #################
 def openDir():
     node = nuke.thisNode()
-    path = os.path.dirname(node["file"].getValue())
-    path = path.replace("/", "\\")
-
-    if os.path.isdir(path):
-        subprocess.check_call(["explorer", path])
+    path = os.path.normpath(os.path.dirname (node.knob("file").value()))
+    cmd = 'explorer "%s"' % (path)    
+    if os.path.exists(path): 
+        os.system (cmd)
     else:
         nuke.message("No dir!")
+        
+        
 #################
 def writeTools():
    n = nuke.thisNode()
